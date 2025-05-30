@@ -3,11 +3,31 @@ return {
 	dependencies = "nvim-tree/nvim-web-devicons",
 	config = function()
 		local nvimtree = require("nvim-tree")
+        local webdevicons = require("nvim-web-devicons")
 
 		-- recommended settings from nvim-tree documentation
 		vim.g.loaded_netrw = 1
 		vim.g.loaded_netrwPlugin = 1
 
+        webdevicons.setup({
+            override = {
+                rs = {
+                    icon = "",
+                    color= "#cb333b",
+                    name = "Rust",
+                },
+                toml = {
+                    icon = "",
+                    color = "#ff9e64",
+                    name = "toml",
+                },
+                lock = {
+                    icon = "󰌱",
+                    color = "#a51b16",
+                    name = "lock",
+                },
+            }
+        })
 		nvimtree.setup({
 			view = {
 				width = 35,
@@ -27,7 +47,6 @@ return {
 				ignore = false,
 			},
 		})
-
 		-- set keymaps
 		local keymap = vim.keymap -- for conciseness
 
