@@ -8,11 +8,12 @@ return {
     },
 
     config = function()
-        local lspconfig = require("lspconfig")
         local mason_lspconfig = require("mason-lspconfig")
-        local cmp_nvim_lsp = require("cmp_nvim_lsp")
 
-        local capabilities = cmp_nvim_lsp.default_capabilities()
+        local keymap = vim.keymap
+        local capabilities = vim.lsp.protocol.make_client_capabilities()
+        capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
+        capabilities.offsetEncoding = { "utf-16" }
 
         -- Diagnostic signs
         vim.diagnostic.config({
@@ -38,7 +39,6 @@ return {
             group = vim.api.nvim_create_augroup("UserLspConfig", {}),
             callback = function(ev)
                 local opts = { buffer = ev.buf, silent = true }
-                local keymap = vim.keymap
 
                 opts.desc = "Show LSP references"
                 keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
@@ -85,6 +85,7 @@ return {
             ensure_installed = { "lua_ls", "rust_analyzer", "pyright" },
         })
 
+        -- Server configs
         local servers = {
             lua_ls = {
                 settings = {
@@ -95,33 +96,33 @@ return {
                 },
             },
             rust_analyzer = {
-                cmd = { "rustup", "run", "stable", "rust-analyzer" },
                 filetypes = { "rust" },
                 settings = {
-                    ["rust-analyzer"] = { cargo = { allFeatures = true } },
+                    ["rust-analyzer"] = {
+                        cargo = { loadOutDirsFromCheck = true },
+                        procMacro = { enable = false },
+                    },
                 },
             },
             pyright = {
                 settings = {
                     pyright = {
-                        analyses = { autoImportCompletion = true },
+                        analysis = {
+                            autoImportCompletion = true,
+                            typeCheckingMode = "basic",
+                            diagnosticMode = "openFilesOnly",
+                            useLibraryCodeForTypes = true,
+                        },
                     },
                 },
             },
         }
 
-        for _, server_name in ipairs(mason_lspconfig.get_installed_servers()) do
-            local opts = {
+        for _, server in ipairs(mason_lspconfig.get_installed_servers()) do
+            vim.lsp.config[server] = vim.tbl_deep_extend("force", {
                 capabilities = capabilities,
-            }
-
-            if servers[server_name] then
-                for k, v in pairs(servers[server_name]) do
-                    opts[k] = v
-                end
-            end
-
-            lspconfig[server_name].setup(opts)
+            }, servers[server] or {})
+            vim.lsp.enable(server)
         end
     end,
 }
